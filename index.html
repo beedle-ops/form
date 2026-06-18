@@ -76,27 +76,6 @@
 
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-    .api-key-row {
-      background: #f0f0ff;
-      border: 1.5px solid #c7d2fe;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 24px;
-    }
-
-    .api-key-row label { color: #4338ca; }
-
-    .api-key-row input {
-      background: #fff;
-      border-color: #c7d2fe;
-    }
-
-    .api-key-note {
-      font-size: 12px;
-      color: #6366f1;
-      margin-top: 6px;
-    }
-
     /* Validation feedback area */
     #validation-box {
       display: none;
@@ -273,12 +252,6 @@
     <h1>Share Product Feedback</h1>
     <p class="subtitle">Help our product team understand what's working and what isn't. Strong feedback includes concrete evidence — who's affected, how often, and what the business impact is.</p>
 
-    <div class="api-key-row field">
-      <label for="api-key">Anthropic API Key <span class="req">*</span></label>
-      <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
-      <p class="api-key-note">Used only to validate your feedback locally — never stored or sent anywhere else.</p>
-    </div>
-
     <div class="row">
       <div class="field">
         <label for="product-area">Product Area <span class="req">*</span></label>
@@ -346,7 +319,6 @@
 
   function getFormData() {
     return {
-      apiKey: document.getElementById('api-key').value.trim(),
       area: document.getElementById('product-area').value,
       type: document.getElementById('feedback-type').value,
       description: document.getElementById('description').value.trim(),
@@ -357,7 +329,6 @@
   }
 
   function validate(data) {
-    if (!data.apiKey) return 'Please enter your Anthropic API key.';
     if (!data.area) return 'Please select a product area.';
     if (!data.type) return 'Please select a feedback type.';
     if (data.description.length < 30) return 'Please describe the issue in more detail (at least 30 characters).';
@@ -377,67 +348,27 @@
     box.className = '';
     box.style.display = 'none';
 
-    const prompt = `You are a product operations assistant. A customer has submitted product feedback. Your job is to evaluate whether the feedback contains sufficient evidence for a product manager to prioritize it.
-
-Good feedback should include:
-1. **Scale of impact** — how many users, accounts, or what percentage are affected
-2. **Business impact** — effect on revenue, churn, support load, deals, or productivity
-3. **Concrete evidence** — data, quotes, ticket IDs, usage metrics, specific examples
-
-Here is the submitted feedback:
-
-Product area: ${data.area}
-Feedback type: ${data.type}
-Description: ${data.description}
-Affected users: ${data.affectedUsers || '(not provided)'}
-Business impact: ${data.businessImpact || '(not provided)'}
-Supporting evidence: ${data.evidence || '(not provided)'}
-
-Respond ONLY with a JSON object (no markdown, no explanation) in this exact format:
-{
-  "score": <integer 0-100 representing overall evidence quality>,
-  "sufficient": <true if score >= 65, else false>,
-  "missing": [<list of short strings naming what's missing, e.g. "scale of impact", "business impact", "supporting data">],
-  "summary": "<1-2 sentence summary of the quality of evidence>",
-  "suggestions": [<list of 1-3 specific, actionable suggestions to improve the feedback, each a complete sentence>]
-}`;
-
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/validate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': data.apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-opus-4-8',
-          max_tokens: 512,
-          thinking: { type: 'adaptive' },
-          messages: [{ role: 'user', content: prompt }],
+          area: data.area,
+          type: data.type,
+          description: data.description,
+          affectedUsers: data.affectedUsers,
+          businessImpact: data.businessImpact,
+          evidence: data.evidence,
         }),
       });
 
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error?.message || `API error ${res.status}`);
-      }
-
       const payload = await res.json();
-      // Extract text from content blocks (skip thinking blocks)
-      let text = '';
-      for (const block of payload.content) {
-        if (block.type === 'text') { text = block.text; break; }
+
+      if (!res.ok) {
+        throw new Error(payload.error || `Server error ${res.status}`);
       }
 
-      // Strip any accidental markdown code fences
-      text = text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
-
-      let result;
-      try { result = JSON.parse(text); }
-      catch { throw new Error('Could not parse AI response. Please try again.'); }
-
+      let result = typeof payload === 'string' ? JSON.parse(payload) : payload;
       renderValidation(result);
     } catch (e) {
       alert('Error: ' + e.message);
