@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GOV.UK One Login — Service Team Feedback</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-dark: #003078;
+      --blue: #1d70b8;
+      --green: #00703c;
+      --yellow: #ffdd00;
+      --red: #d4351c;
+      --grey: #505a5f;
+      --grey-light: #f3f2f1;
+      --border: #b1b4b6;
+      --text: #0b0c0c;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--grey-light);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--blue-dark);
+      border-bottom: 10px solid var(--yellow);
+      padding: 12px 24px;
+    }
+
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .header-logo {
+      color: var(--yellow);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .header-product {
+      color: var(--white);
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    /* Content */
+    .content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin-bottom: 8px;
+    }
+
+    /* Evidence hint box */
+    .hint-box {
+      background: var(--white);
+      border-left: 6px solid var(--blue);
+      padding: 18px 20px;
+      margin: 24px 0 32px;
+    }
+
+    .hint-box p {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--blue-dark);
+      margin-bottom: 10px;
+    }
+
+    .hint-box ul {
+      padding-left: 20px;
+      font-size: 14px;
+      color: var(--grey);
+    }
+
+    .hint-box ul li { margin-bottom: 4px; }
+
+    /* Form */
+    form {
+      background: var(--white);
+      padding: 32px;
+      border: 1px solid var(--border);
+    }
+
+    .field {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .field-hint {
+      font-size: 14px;
+      color: var(--grey);
+      margin-bottom: 8px;
+    }
+
+    .optional-tag {
+      font-weight: 400;
+      color: var(--grey);
+      font-size: 14px;
+      margin-left: 4px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+    }
+
+    textarea { resize: vertical; }
+    textarea:focus, input:focus, select:focus {
+      outline: 3px solid var(--yellow);
+      outline-offset: 0;
+      border-color: var(--text);
+    }
+
+    .btn-submit {
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover { background: #005a30; }
+    .btn-submit:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Success */
+    #success-panel {
+      display: none;
+      background: var(--white);
+      border: 1px solid var(--border);
+      padding: 32px;
+      margin-top: 24px;
+    }
+
+    #success-panel.show { display: block; }
+
+    .success-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .tick {
+      width: 36px;
+      height: 36px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-size: 18px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .success-heading h2 { font-size: 20px; color: var(--blue-dark); }
+
+    #success-panel p {
+      font-size: 15px;
+      color: var(--grey);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .btn-another {
+      background: none;
+      border: 2px solid var(--border);
+      padding: 10px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .btn-another:hover { background: var(--grey-light); }
+    .btn-another:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+
+    .error-banner {
+      display: none;
+      background: #fdf0ee;
+      border-left: 6px solid var(--red);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 15px;
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .error-banner.show { display: block; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <span class="header-logo">GOV.UK</span>
+    <span class="header-product">One Login — Service Team Feedback</span>
+  </div>
+</header>
+
+<div class="content">
+  <h1>Share feedback about GOV.UK One Login</h1>
+
+  <div class="hint-box">
+    <p>The more evidence you can provide, the faster we can prioritise your feedback. You don't need all the details to submit — but these help us act:</p>
+    <ul>
+      <li>How many people this affects</li>
+      <li>Whether it's blocking work or just inconvenient</li>
+      <li>Specific steps to reproduce (for bugs)</li>
+    </ul>
+  </div>
+
+  <div id="error-banner" class="error-banner">Something went wrong submitting your feedback. Please try again.</div>
+
+  <form id="feedback-form" novalidate>
+    <div class="field">
+      <label for="problem">What's the problem? <span style="color:#d4351c">*</span></label>
+      <div class="field-hint">Describe what's happening or what you need. Be as specific as you can.</div>
+      <textarea id="problem" name="problem" rows="6" required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="service_team">Which service or team are you from? <span class="optional-tag">(optional)</span></label>
+      <div class="field-hint">E.g. "DVLA onboarding team", "DWP Finance portal"</div>
+      <input type="text" id="service_team" name="service_team" autocomplete="organization">
+    </div>
+
+    <div class="field">
+      <label for="users_affected">How many users are affected? <span class="optional-tag">(optional)</span></label>
+      <select id="users_affected" name="users_affected">
+        <option value="">— Select —</option>
+        <option value="single">Just me / one user</option>
+        <option value="1-10">1–10 users</option>
+        <option value="10-50">10–50 users</option>
+        <option value="50+">50+ users</option>
+        <option value="unknown">Not sure</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="business_impact">What's the business impact? <span class="optional-tag">(optional)</span></label>
+      <select id="business_impact" name="business_impact">
+        <option value="">— Select —</option>
+        <option value="not_affecting">Not affecting work</option>
+        <option value="slowing">Slowing work down</option>
+        <option value="blocking">Blocking work completely</option>
+        <option value="escalation">Escalated — needs urgent attention</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="details">Any other details? <span class="optional-tag">(optional)</span></label>
+      <div class="field-hint">Error messages, steps to reproduce, screenshots, links.</div>
+      <textarea id="details" name="details" rows="4"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit" id="btn-submit">Submit feedback</button>
+  </form>
+
+  <div id="success-panel">
+    <div class="success-heading">
+      <div class="tick">✓</div>
+      <h2>Thanks — your feedback is in our triage queue</h2>
+    </div>
+    <p>We review submissions before our weekly product meeting. Urgent or high-evidence feedback is picked up sooner.</p>
+    <button class="btn-another" onclick="resetForm()">Submit another piece of feedback</button>
+  </div>
+</div>
+
+<script>
+  document.getElementById('feedback-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const problem = document.getElementById('problem').value.trim();
+    if (!problem) {
+      document.getElementById('problem').focus();
+      return;
+    }
+
+    const btn = document.getElementById('btn-submit');
+    const errorBanner = document.getElementById('error-banner');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+    errorBanner.classList.remove('show');
+
+    const payload = {
+      problem,
+      service_team: document.getElementById('service_team').value.trim(),
+      users_affected: document.getElementById('users_affected').value,
+      business_impact: document.getElementById('business_impact').value,
+      details: document.getElementById('details').value.trim(),
+    };
+
+    try {
+      const res = await fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      document.getElementById('feedback-form').style.display = 'none';
+      document.querySelector('.hint-box').style.display = 'none';
+      document.querySelector('h1').style.display = 'none';
+      document.getElementById('success-panel').classList.add('show');
+    } catch {
+      errorBanner.classList.add('show');
+      errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit feedback';
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('feedback-form').reset();
+    document.getElementById('feedback-form').style.display = '';
+    document.querySelector('.hint-box').style.display = '';
+    document.querySelector('h1').style.display = '';
+    document.getElementById('success-panel').classList.remove('show');
+    document.getElementById('error-banner').classList.remove('show');
+    document.getElementById('problem').focus();
+  }
+</script>
+</body>
+</html>
