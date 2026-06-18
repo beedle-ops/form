@@ -3,212 +3,265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Feedback</title>
+  <title>GOV.UK One Login — Service Team Feedback</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f5f5f7;
-      min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 40px 16px;
+    :root {
+      --blue: #1d70b8;
+      --blue-dark: #003078;
+      --green: #00703c;
+      --yellow: #ffdd00;
+      --red: #d4351c;
+      --grey: #505a5f;
+      --grey-light: #f3f2f1;
+      --border: #b1b4b6;
+      --text: #0b0c0c;
+      --white: #ffffff;
     }
 
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 640px;
-      padding: 40px;
+    body {
+      font-family: "GDS Transport", Arial, sans-serif;
+      background: var(--grey-light);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    /* GOV.UK header strip */
+    .govuk-header {
+      background: var(--blue-dark);
+      border-bottom: 10px solid var(--yellow);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .govuk-header__crown {
+      color: var(--yellow);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+    }
+
+    .govuk-header__product {
+      color: var(--white);
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    /* Layout */
+    .page {
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 740px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar { order: -1; }
+    }
+
+    /* Main panel */
+    .main {
+      background: var(--white);
+      border: 1px solid var(--border);
+      padding: 32px;
     }
 
     h1 {
       font-size: 24px;
       font-weight: 700;
-      color: #111;
+      color: var(--blue-dark);
       margin-bottom: 6px;
     }
 
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 32px;
-      line-height: 1.5;
+    .lede {
+      color: var(--grey);
+      font-size: 15px;
+      margin-bottom: 28px;
+      line-height: 1.6;
     }
 
-    .field {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 6px;
-    }
-
-    label span.req { color: #e53e3e; margin-left: 2px; }
-
-    input[type="text"], select, textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 14px;
-      color: #111;
-      background: #fafafa;
-      transition: border-color 0.15s;
-      outline: none;
-      font-family: inherit;
-    }
-
-    input[type="text"]:focus, select:focus, textarea:focus {
-      border-color: #4f46e5;
-      background: #fff;
-    }
-
-    textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
-
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-    /* Validation feedback area */
-    #validation-box {
-      display: none;
-      margin-bottom: 24px;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    #validation-box.show { display: block; }
-
-    #validation-box.insufficient {
-      border: 1.5px solid #f59e0b;
-      background: #fffbeb;
-    }
-
-    #validation-box.sufficient {
-      border: 1.5px solid #10b981;
-      background: #ecfdf5;
-    }
-
-    .validation-header {
+    /* Service team selector */
+    .service-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .insufficient .validation-header { color: #92400e; background: #fef3c7; }
-    .sufficient .validation-header { color: #065f46; background: #d1fae5; }
-
-    .validation-body {
-      padding: 14px 16px;
-      font-size: 13.5px;
-      line-height: 1.7;
-      color: #374151;
-    }
-
-    .validation-body ul { padding-left: 18px; margin-top: 6px; }
-    .validation-body li { margin-bottom: 4px; }
-
-    .missing-tag {
-      display: inline-block;
-      background: #fde68a;
-      color: #78350f;
-      border-radius: 4px;
-      padding: 1px 6px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-right: 4px;
-    }
-
-    /* Score bar */
-    .score-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      border-top: 1px solid rgba(0,0,0,0.06);
-    }
-
-    .score-label { font-size: 12px; font-weight: 600; color: #6b7280; white-space: nowrap; }
-
-    .score-bar {
-      flex: 1;
-      height: 6px;
-      background: #e5e7eb;
-      border-radius: 99px;
-      overflow: hidden;
-    }
-
-    .score-fill {
-      height: 100%;
-      border-radius: 99px;
-      transition: width 0.4s ease;
-    }
-
-    .score-fill.low { background: #ef4444; }
-    .score-fill.mid { background: #f59e0b; }
-    .score-fill.high { background: #10b981; }
-
-    .score-value { font-size: 12px; font-weight: 700; color: #374151; min-width: 28px; text-align: right; }
-
-    /* Buttons */
-    .btn-row {
-      display: flex;
       gap: 12px;
-      justify-content: flex-end;
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .service-row label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--grey);
+      white-space: nowrap;
+    }
+
+    select {
+      padding: 6px 10px;
+      border: 2px solid var(--border);
+      border-radius: 0;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--white);
+      cursor: pointer;
+    }
+
+    select:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+
+    /* Conversation turn */
+    .turn {
+      margin-bottom: 24px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .turn-question {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .turn-answer {
+      font-size: 15px;
+      color: var(--grey);
+      background: var(--grey-light);
+      padding: 10px 14px;
+      border-left: 4px solid var(--blue);
+      line-height: 1.6;
+    }
+
+    /* Active question */
+    .active-question {
       margin-top: 8px;
     }
 
-    button {
-      padding: 10px 22px;
-      border-radius: 8px;
+    .active-label {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .acknowledgement {
       font-size: 14px;
+      color: var(--green);
       font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      border-radius: 0;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.5;
+    }
+
+    textarea:focus { outline: 3px solid var(--yellow); outline-offset: 0; border-color: var(--text); }
+
+    .char-hint { font-size: 13px; color: var(--grey); margin-top: 4px; }
+
+    /* Button group */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 0;
+      transition: background 0.1s;
+      line-height: 1;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: var(--white);
+    }
+
+    .btn-primary:hover { background: #005a30; }
+    .btn-primary:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--grey-light);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover { background: #e8e8e8; }
+    .btn-secondary:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+
+    .btn-link {
+      background: none;
       border: none;
-      transition: opacity 0.15s, background 0.15s;
+      color: var(--blue);
+      font-size: 15px;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
     }
 
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-link:hover { color: var(--blue-dark); }
 
-    #btn-check {
-      background: #4f46e5;
-      color: #fff;
+    /* Loading state */
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--grey);
+      font-size: 15px;
+      margin-top: 12px;
     }
 
-    #btn-check:hover:not(:disabled) { background: #4338ca; }
-
-    #btn-submit {
-      background: #10b981;
-      color: #fff;
-      display: none;
+    .dot-flashing {
+      display: flex;
+      gap: 4px;
     }
 
-    #btn-submit.show { display: inline-block; }
-    #btn-submit:hover:not(:disabled) { background: #059669; }
-
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
+    .dot-flashing span {
+      width: 6px; height: 6px;
+      background: var(--blue);
       border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      margin-right: 6px;
-      vertical-align: middle;
+      animation: dotBounce 1.2s infinite ease-in-out;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .dot-flashing span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-flashing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotBounce {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
 
     /* Success screen */
     #success-screen {
@@ -219,223 +272,377 @@
 
     #success-screen.show { display: block; }
 
-    .success-icon {
-      width: 64px;
-      height: 64px;
-      background: #d1fae5;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 28px;
+    .success-box {
+      border-left: 6px solid var(--green);
+      background: #e3f4eb;
+      padding: 20px 24px;
+      text-align: left;
+      margin-bottom: 24px;
     }
 
-    #success-screen h2 { font-size: 20px; color: #111; margin-bottom: 8px; }
-    #success-screen p { font-size: 14px; color: #666; line-height: 1.6; }
+    .success-box h2 { font-size: 19px; color: var(--green); margin-bottom: 6px; }
+    .success-box p { font-size: 15px; color: #003321; line-height: 1.6; }
 
-    #form-section { transition: opacity 0.2s; }
+    .urgent-box {
+      border-left: 6px solid var(--red);
+      background: #fdf0ee;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
 
-    .char-count { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 4px; }
+    .urgent-box p { font-size: 14px; color: var(--red); font-weight: 600; }
+
+    .ref-tag {
+      font-family: monospace;
+      background: var(--grey-light);
+      padding: 4px 8px;
+      font-size: 13px;
+      color: var(--grey);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky;
+      top: 24px;
+    }
+
+    .sidebar-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      padding: 20px;
+    }
+
+    .sidebar-panel h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--yellow);
+    }
+
+    .sidebar-empty {
+      font-size: 14px;
+      color: var(--border);
+      font-style: italic;
+    }
+
+    .thread-item {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--grey-light);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .thread-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .thread-q {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--grey);
+      margin-bottom: 4px;
+    }
+
+    .thread-a {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .exchange-count {
+      font-size: 12px;
+      color: var(--grey);
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .progress-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .progress-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    .progress-dot.done { background: var(--green); }
+    .progress-dot.active { background: var(--blue); }
   </style>
 </head>
 <body>
-<div class="card">
 
-  <div id="success-screen">
-    <div class="success-icon">✓</div>
-    <h2>Feedback submitted!</h2>
-    <p>Thank you. Your feedback has been sent to the product team.<br>We'll follow up if we have questions.</p>
-  </div>
+<header class="govuk-header">
+  <span class="govuk-header__crown">GOV.UK</span>
+  <span class="govuk-header__product">One Login — Service Team Feedback</span>
+</header>
 
-  <div id="form-section">
-    <h1>Share Product Feedback</h1>
-    <p class="subtitle">Help our product team understand what's working and what isn't. Strong feedback includes concrete evidence — who's affected, how often, and what the business impact is.</p>
+<div class="page">
+  <main class="main">
 
-    <div class="row">
-      <div class="field">
-        <label for="product-area">Product Area <span class="req">*</span></label>
-        <select id="product-area">
-          <option value="">Select area…</option>
-          <option>Onboarding</option>
-          <option>Dashboard</option>
-          <option>Reporting</option>
-          <option>Integrations</option>
-          <option>Billing</option>
-          <option>Mobile App</option>
-          <option>API</option>
+    <div id="success-screen">
+      <div class="success-box">
+        <h2>Thanks — your feedback is in the triage queue</h2>
+        <p id="success-summary"></p>
+      </div>
+      <div id="urgent-box" class="urgent-box" style="display:none">
+        <p>⚠ This has been flagged as potentially urgent and will be reviewed promptly.</p>
+      </div>
+      <p style="font-size:14px;color:var(--grey)">Reference: <span id="ref-tag" class="ref-tag"></span></p>
+      <br>
+      <button class="btn btn-secondary" onclick="resetForm()">Submit more feedback</button>
+    </div>
+
+    <div id="form-section">
+      <h1>Share feedback about GOV.UK One Login</h1>
+      <p class="lede">Tell us what's not working, what could be better, or what you need. We'll ask a couple of follow-up questions to make sure we have enough context to act on it.</p>
+
+      <div class="service-row">
+        <label for="service-team">Your service:</label>
+        <select id="service-team">
+          <option value="">Not specified</option>
+          <option>GOV.UK Pay</option>
+          <option>DVLA</option>
+          <option>DWP</option>
+          <option>HMRC</option>
+          <option>Home Office</option>
+          <option>NHS</option>
+          <option>Companies House</option>
+          <option>Land Registry</option>
+          <option>DVSA</option>
           <option>Other</option>
         </select>
       </div>
-      <div class="field">
-        <label for="feedback-type">Feedback Type <span class="req">*</span></label>
-        <select id="feedback-type">
-          <option value="">Select type…</option>
-          <option>Bug / Broken behaviour</option>
-          <option>Feature request</option>
-          <option>Performance issue</option>
-          <option>UX / Usability concern</option>
-          <option>Missing capability</option>
-          <option>Other</option>
-        </select>
+
+      <div id="conversation"></div>
+
+      <div id="active-area" class="active-question">
+        <div class="active-label" id="current-question">What's the problem or feedback you have about GOV.UK One Login?</div>
+        <textarea id="answer-input" placeholder="Describe what you're experiencing or what you need…" oninput="updateCharHint()" rows="4"></textarea>
+        <p class="char-hint" id="char-hint"></p>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-next" onclick="handleNext()">Continue</button>
+          <button class="btn btn-link" id="btn-skip" onclick="handleSkip()">Skip this question</button>
+          <button class="btn btn-secondary" id="btn-submit" style="display:none" onclick="handleSubmit()">Submit feedback</button>
+        </div>
+        <div class="loading" id="loading" style="display:none">
+          <div class="dot-flashing"><span></span><span></span><span></span></div>
+          <span>One moment…</span>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label for="description">Describe the problem or request <span class="req">*</span></label>
-      <textarea id="description" placeholder="What's happening? What did you expect? Include specific details, steps to reproduce, or examples…" oninput="updateCharCount(this)"></textarea>
-      <div class="char-count"><span id="desc-count">0</span> characters</div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-panel">
+      <h3>What you've shared</h3>
+      <div id="thread-list">
+        <p class="sidebar-empty">Your answers will appear here as you go.</p>
+      </div>
+      <div id="progress-section" style="display:none">
+        <div class="exchange-count" id="exchange-count"></div>
+        <div class="progress-dots" id="progress-dots"></div>
+      </div>
     </div>
-
-    <div class="field">
-      <label for="affected-users">Scale of Impact</label>
-      <input type="text" id="affected-users" placeholder="e.g. ~200 users/week, all enterprise accounts, our top 10 customers…">
-    </div>
-
-    <div class="field">
-      <label for="business-impact">Business Impact</label>
-      <input type="text" id="business-impact" placeholder="e.g. causing churn, blocking $50k deal, 3 support tickets/day, team spends 2hrs/week on workaround…">
-    </div>
-
-    <div class="field">
-      <label for="evidence">Supporting Evidence / Data</label>
-      <input type="text" id="evidence" placeholder="e.g. NPS comments, support ticket IDs, usage analytics, customer quotes…">
-    </div>
-
-    <div id="validation-box"></div>
-
-    <div class="btn-row">
-      <button id="btn-check" onclick="checkEvidence()">Check my feedback</button>
-      <button id="btn-submit" onclick="submitFeedback()">Submit feedback →</button>
-    </div>
-  </div>
-
+  </aside>
 </div>
 
 <script>
-  function updateCharCount(el) {
-    document.getElementById('desc-count').textContent = el.value.length;
+  const OPENING_QUESTION = 'What\'s the problem or feedback you have about GOV.UK One Login?';
+  const ACK_PHRASES = [
+    'Got it.',
+    'Thanks for that.',
+    'Helpful — thanks.',
+    'Understood.',
+    'Thanks for the detail.',
+  ];
+
+  let history = []; // [{q, a}]
+  let currentQuestion = OPENING_QUESTION;
+  let done = false;
+  let exchangeCount = 0;
+  const MAX_EXCHANGES = 4;
+
+  function updateCharHint() {
+    const len = document.getElementById('answer-input').value.trim().length;
+    const hint = document.getElementById('char-hint');
+    hint.textContent = len > 0 ? `${len} character${len === 1 ? '' : 's'}` : '';
   }
 
-  function getFormData() {
-    return {
-      area: document.getElementById('product-area').value,
-      type: document.getElementById('feedback-type').value,
-      description: document.getElementById('description').value.trim(),
-      affectedUsers: document.getElementById('affected-users').value.trim(),
-      businessImpact: document.getElementById('business-impact').value.trim(),
-      evidence: document.getElementById('evidence').value.trim(),
-    };
+  function setLoading(on) {
+    document.getElementById('loading').style.display = on ? 'flex' : 'none';
+    document.getElementById('btn-next').disabled = on;
+    document.getElementById('btn-skip').style.visibility = on ? 'hidden' : 'visible';
   }
 
-  function validate(data) {
-    if (!data.area) return 'Please select a product area.';
-    if (!data.type) return 'Please select a feedback type.';
-    if (data.description.length < 30) return 'Please describe the issue in more detail (at least 30 characters).';
-    return null;
+  function updateSidebar() {
+    const list = document.getElementById('thread-list');
+    if (history.length === 0) {
+      list.innerHTML = '<p class="sidebar-empty">Your answers will appear here as you go.</p>';
+      document.getElementById('progress-section').style.display = 'none';
+      return;
+    }
+
+    list.innerHTML = history.map(({ q, a }) => `
+      <div class="thread-item">
+        <div class="thread-q">${escHtml(q)}</div>
+        <div class="thread-a">${escHtml(a || '(skipped)')}</div>
+      </div>`).join('');
+
+    document.getElementById('progress-section').style.display = 'block';
+    document.getElementById('exchange-count').textContent = `${history.length} of up to ${MAX_EXCHANGES} questions`;
+
+    const dots = document.getElementById('progress-dots');
+    dots.innerHTML = Array.from({ length: MAX_EXCHANGES }, (_, i) => {
+      const cls = i < history.length ? 'done' : i === history.length ? 'active' : '';
+      return `<div class="progress-dot ${cls}"></div>`;
+    }).join('');
   }
 
-  async function checkEvidence() {
-    const data = getFormData();
-    const err = validate(data);
-    if (err) { alert(err); return; }
+  function pushToConversation(q, a) {
+    const conv = document.getElementById('conversation');
+    const ack = ACK_PHRASES[history.length % ACK_PHRASES.length];
+    const div = document.createElement('div');
+    div.className = 'turn';
+    div.innerHTML = `
+      <div class="turn-question">${escHtml(q)}</div>
+      <div class="turn-answer">${escHtml(a || '(skipped)')}</div>
+      <div class="acknowledgement" style="margin-top:6px">${a ? ack : ''}</div>`;
+    conv.appendChild(div);
+  }
 
-    const btn = document.getElementById('btn-check');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Analyzing…';
+  async function handleNext() {
+    const input = document.getElementById('answer-input');
+    const answer = input.value.trim();
+    if (!answer) { input.focus(); return; }
+    await advance(answer);
+  }
 
-    const box = document.getElementById('validation-box');
-    box.className = '';
-    box.style.display = 'none';
+  async function handleSkip() {
+    await advance('');
+  }
+
+  async function advance(answer) {
+    const q = currentQuestion;
+    setLoading(true);
+    input_disable(true);
 
     try {
-      const res = await fetch('/api/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          area: data.area,
-          type: data.type,
-          description: data.description,
-          affectedUsers: data.affectedUsers,
-          businessImpact: data.businessImpact,
-          evidence: data.evidence,
-        }),
-      });
+      // Record this exchange
+      history.push({ q, a: answer });
+      pushToConversation(q, answer);
+      updateSidebar();
 
-      const payload = await res.json();
-
-      if (!res.ok) {
-        throw new Error(payload.error || `Server error ${res.status}`);
+      // Check if we're past max
+      if (history.length >= MAX_EXCHANGES) {
+        transitionToDone();
+        return;
       }
 
-      let result = typeof payload === 'string' ? JSON.parse(payload) : payload;
-      renderValidation(result);
+      // Ask server for next question
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history, latestAnswer: answer }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Server error');
+
+      if (data.done || !data.question) {
+        transitionToDone();
+      } else {
+        currentQuestion = data.question;
+        document.getElementById('current-question').textContent = currentQuestion;
+        document.getElementById('answer-input').value = '';
+        updateCharHint();
+        document.getElementById('answer-input').focus();
+      }
     } catch (e) {
-      alert('Error: ' + e.message);
+      alert('Something went wrong: ' + e.message);
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Check my feedback';
+      setLoading(false);
+      input_disable(false);
     }
   }
 
-  function renderValidation(result) {
-    const box = document.getElementById('validation-box');
-    const submitBtn = document.getElementById('btn-submit');
-    const score = Math.max(0, Math.min(100, result.score || 0));
-    const sufficient = result.sufficient === true;
-
-    const scoreClass = score < 40 ? 'low' : score < 65 ? 'mid' : 'high';
-    const icon = sufficient ? '✓' : '⚠';
-    const headerText = sufficient ? 'Evidence looks good — ready to submit' : 'Feedback needs more evidence';
-
-    let missingHtml = '';
-    if (!sufficient && result.missing && result.missing.length) {
-      missingHtml = '<p style="margin-bottom:6px;font-weight:600;color:#92400e;">Missing:</p><p>' +
-        result.missing.map(m => `<span class="missing-tag">${m}</span>`).join(' ') + '</p>';
-    }
-
-    let suggestionsHtml = '';
-    if (result.suggestions && result.suggestions.length) {
-      const items = result.suggestions.map(s => `<li>${s}</li>`).join('');
-      suggestionsHtml = `<p style="margin-top:12px;font-weight:600;color:${sufficient ? '#065f46' : '#92400e'};">Suggestions:</p><ul>${items}</ul>`;
-    }
-
-    box.className = `show ${sufficient ? 'sufficient' : 'insufficient'}`;
-    box.style.display = '';
-    box.innerHTML = `
-      <div class="validation-header">${icon} ${headerText}</div>
-      <div class="validation-body">
-        <p>${result.summary || ''}</p>
-        ${missingHtml}
-        ${suggestionsHtml}
-      </div>
-      <div class="score-row">
-        <span class="score-label">Evidence score</span>
-        <div class="score-bar"><div class="score-fill ${scoreClass}" style="width:${score}%"></div></div>
-        <span class="score-value">${score}/100</span>
-      </div>`;
-
-    if (sufficient) {
-      submitBtn.classList.add('show');
-    } else {
-      submitBtn.classList.remove('show');
-    }
-
-    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  function transitionToDone() {
+    done = true;
+    document.getElementById('current-question').textContent = 'That\'s everything we need. Ready to send?';
+    document.getElementById('answer-input').style.display = 'none';
+    document.getElementById('char-hint').style.display = 'none';
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('btn-skip').style.display = 'none';
+    document.getElementById('btn-submit').style.display = 'inline-block';
   }
 
-  function submitFeedback() {
-    const data = getFormData();
-    const err = validate(data);
-    if (err) { alert(err); return; }
+  async function handleSubmit() {
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
 
-    // In a real app: POST to your backend here.
-    document.getElementById('form-section').style.opacity = '0';
-    setTimeout(() => {
+    const serviceTeam = document.getElementById('service-team').value;
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history, serviceTeam }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Submission failed');
+
       document.getElementById('form-section').style.display = 'none';
       const s = document.getElementById('success-screen');
       s.classList.add('show');
-    }, 200);
+      document.getElementById('success-summary').textContent = data.summary || 'Your feedback has been received.';
+      document.getElementById('ref-tag').textContent = data.id;
+      if (data.urgentFlag) {
+        document.getElementById('urgent-box').style.display = 'block';
+      }
+    } catch (e) {
+      alert('Submission failed: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = 'Submit feedback';
+    }
+  }
+
+  function resetForm() {
+    history = [];
+    currentQuestion = OPENING_QUESTION;
+    done = false;
+    document.getElementById('conversation').innerHTML = '';
+    document.getElementById('answer-input').value = '';
+    document.getElementById('answer-input').style.display = '';
+    document.getElementById('char-hint').style.display = '';
+    document.getElementById('current-question').textContent = OPENING_QUESTION;
+    document.getElementById('btn-next').style.display = '';
+    document.getElementById('btn-next').disabled = false;
+    document.getElementById('btn-skip').style.display = '';
+    document.getElementById('btn-submit').style.display = 'none';
+    document.getElementById('service-team').value = '';
+    document.getElementById('success-screen').classList.remove('show');
+    document.getElementById('urgent-box').style.display = 'none';
+    document.getElementById('form-section').style.display = '';
+    updateSidebar();
+  }
+
+  function input_disable(on) {
+    document.getElementById('answer-input').disabled = on;
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 </script>
 </body>
