@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Feedback</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f7;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 640px;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    label span.req { color: #e53e3e; margin-left: 2px; }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #111;
+      background: #fafafa;
+      transition: border-color 0.15s;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: #4f46e5;
+      background: #fff;
+    }
+
+    textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .api-key-row {
+      background: #f0f0ff;
+      border: 1.5px solid #c7d2fe;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .api-key-row label { color: #4338ca; }
+
+    .api-key-row input {
+      background: #fff;
+      border-color: #c7d2fe;
+    }
+
+    .api-key-note {
+      font-size: 12px;
+      color: #6366f1;
+      margin-top: 6px;
+    }
+
+    /* Validation feedback area */
+    #validation-box {
+      display: none;
+      margin-bottom: 24px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #validation-box.show { display: block; }
+
+    #validation-box.insufficient {
+      border: 1.5px solid #f59e0b;
+      background: #fffbeb;
+    }
+
+    #validation-box.sufficient {
+      border: 1.5px solid #10b981;
+      background: #ecfdf5;
+    }
+
+    .validation-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .insufficient .validation-header { color: #92400e; background: #fef3c7; }
+    .sufficient .validation-header { color: #065f46; background: #d1fae5; }
+
+    .validation-body {
+      padding: 14px 16px;
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .validation-body ul { padding-left: 18px; margin-top: 6px; }
+    .validation-body li { margin-bottom: 4px; }
+
+    .missing-tag {
+      display: inline-block;
+      background: #fde68a;
+      color: #78350f;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    /* Score bar */
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .score-label { font-size: 12px; font-weight: 600; color: #6b7280; white-space: nowrap; }
+
+    .score-bar {
+      flex: 1;
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .score-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    .score-fill.low { background: #ef4444; }
+    .score-fill.mid { background: #f59e0b; }
+    .score-fill.high { background: #10b981; }
+
+    .score-value { font-size: 12px; font-weight: 700; color: #374151; min-width: 28px; text-align: right; }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    button {
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #btn-check {
+      background: #4f46e5;
+      color: #fff;
+    }
+
+    #btn-check:hover:not(:disabled) { background: #4338ca; }
+
+    #btn-submit {
+      background: #10b981;
+      color: #fff;
+      display: none;
+    }
+
+    #btn-submit.show { display: inline-block; }
+    #btn-submit:hover:not(:disabled) { background: #059669; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success screen */
+    #success-screen {
+      display: none;
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    #success-screen.show { display: block; }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      background: #d1fae5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+
+    #success-screen h2 { font-size: 20px; color: #111; margin-bottom: 8px; }
+    #success-screen p { font-size: 14px; color: #666; line-height: 1.6; }
+
+    #form-section { transition: opacity 0.2s; }
+
+    .char-count { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <div id="success-screen">
+    <div class="success-icon">✓</div>
+    <h2>Feedback submitted!</h2>
+    <p>Thank you. Your feedback has been sent to the product team.<br>We'll follow up if we have questions.</p>
+  </div>
+
+  <div id="form-section">
+    <h1>Share Product Feedback</h1>
+    <p class="subtitle">Help our product team understand what's working and what isn't. Strong feedback includes concrete evidence — who's affected, how often, and what the business impact is.</p>
+
+    <div class="api-key-row field">
+      <label for="api-key">Anthropic API Key <span class="req">*</span></label>
+      <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
+      <p class="api-key-note">Used only to validate your feedback locally — never stored or sent anywhere else.</p>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="product-area">Product Area <span class="req">*</span></label>
+        <select id="product-area">
+          <option value="">Select area…</option>
+          <option>Onboarding</option>
+          <option>Dashboard</option>
+          <option>Reporting</option>
+          <option>Integrations</option>
+          <option>Billing</option>
+          <option>Mobile App</option>
+          <option>API</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="feedback-type">Feedback Type <span class="req">*</span></label>
+        <select id="feedback-type">
+          <option value="">Select type…</option>
+          <option>Bug / Broken behaviour</option>
+          <option>Feature request</option>
+          <option>Performance issue</option>
+          <option>UX / Usability concern</option>
+          <option>Missing capability</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">Describe the problem or request <span class="req">*</span></label>
+      <textarea id="description" placeholder="What's happening? What did you expect? Include specific details, steps to reproduce, or examples…" oninput="updateCharCount(this)"></textarea>
+      <div class="char-count"><span id="desc-count">0</span> characters</div>
+    </div>
+
+    <div class="field">
+      <label for="affected-users">Scale of Impact</label>
+      <input type="text" id="affected-users" placeholder="e.g. ~200 users/week, all enterprise accounts, our top 10 customers…">
+    </div>
+
+    <div class="field">
+      <label for="business-impact">Business Impact</label>
+      <input type="text" id="business-impact" placeholder="e.g. causing churn, blocking $50k deal, 3 support tickets/day, team spends 2hrs/week on workaround…">
+    </div>
+
+    <div class="field">
+      <label for="evidence">Supporting Evidence / Data</label>
+      <input type="text" id="evidence" placeholder="e.g. NPS comments, support ticket IDs, usage analytics, customer quotes…">
+    </div>
+
+    <div id="validation-box"></div>
+
+    <div class="btn-row">
+      <button id="btn-check" onclick="checkEvidence()">Check my feedback</button>
+      <button id="btn-submit" onclick="submitFeedback()">Submit feedback →</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function updateCharCount(el) {
+    document.getElementById('desc-count').textContent = el.value.length;
+  }
+
+  function getFormData() {
+    return {
+      apiKey: document.getElementById('api-key').value.trim(),
+      area: document.getElementById('product-area').value,
+      type: document.getElementById('feedback-type').value,
+      description: document.getElementById('description').value.trim(),
+      affectedUsers: document.getElementById('affected-users').value.trim(),
+      businessImpact: document.getElementById('business-impact').value.trim(),
+      evidence: document.getElementById('evidence').value.trim(),
+    };
+  }
+
+  function validate(data) {
+    if (!data.apiKey) return 'Please enter your Anthropic API key.';
+    if (!data.area) return 'Please select a product area.';
+    if (!data.type) return 'Please select a feedback type.';
+    if (data.description.length < 30) return 'Please describe the issue in more detail (at least 30 characters).';
+    return null;
+  }
+
+  async function checkEvidence() {
+    const data = getFormData();
+    const err = validate(data);
+    if (err) { alert(err); return; }
+
+    const btn = document.getElementById('btn-check');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Analyzing…';
+
+    const box = document.getElementById('validation-box');
+    box.className = '';
+    box.style.display = 'none';
+
+    const prompt = `You are a product operations assistant. A customer has submitted product feedback. Your job is to evaluate whether the feedback contains sufficient evidence for a product manager to prioritize it.
+
+Good feedback should include:
+1. **Scale of impact** — how many users, accounts, or what percentage are affected
+2. **Business impact** — effect on revenue, churn, support load, deals, or productivity
+3. **Concrete evidence** — data, quotes, ticket IDs, usage metrics, specific examples
+
+Here is the submitted feedback:
+
+Product area: ${data.area}
+Feedback type: ${data.type}
+Description: ${data.description}
+Affected users: ${data.affectedUsers || '(not provided)'}
+Business impact: ${data.businessImpact || '(not provided)'}
+Supporting evidence: ${data.evidence || '(not provided)'}
+
+Respond ONLY with a JSON object (no markdown, no explanation) in this exact format:
+{
+  "score": <integer 0-100 representing overall evidence quality>,
+  "sufficient": <true if score >= 65, else false>,
+  "missing": [<list of short strings naming what's missing, e.g. "scale of impact", "business impact", "supporting data">],
+  "summary": "<1-2 sentence summary of the quality of evidence>",
+  "suggestions": [<list of 1-3 specific, actionable suggestions to improve the feedback, each a complete sentence>]
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': data.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 512,
+          thinking: { type: 'adaptive' },
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error?.message || `API error ${res.status}`);
+      }
+
+      const payload = await res.json();
+      // Extract text from content blocks (skip thinking blocks)
+      let text = '';
+      for (const block of payload.content) {
+        if (block.type === 'text') { text = block.text; break; }
+      }
+
+      // Strip any accidental markdown code fences
+      text = text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+
+      let result;
+      try { result = JSON.parse(text); }
+      catch { throw new Error('Could not parse AI response. Please try again.'); }
+
+      renderValidation(result);
+    } catch (e) {
+      alert('Error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Check my feedback';
+    }
+  }
+
+  function renderValidation(result) {
+    const box = document.getElementById('validation-box');
+    const submitBtn = document.getElementById('btn-submit');
+    const score = Math.max(0, Math.min(100, result.score || 0));
+    const sufficient = result.sufficient === true;
+
+    const scoreClass = score < 40 ? 'low' : score < 65 ? 'mid' : 'high';
+    const icon = sufficient ? '✓' : '⚠';
+    const headerText = sufficient ? 'Evidence looks good — ready to submit' : 'Feedback needs more evidence';
+
+    let missingHtml = '';
+    if (!sufficient && result.missing && result.missing.length) {
+      missingHtml = '<p style="margin-bottom:6px;font-weight:600;color:#92400e;">Missing:</p><p>' +
+        result.missing.map(m => `<span class="missing-tag">${m}</span>`).join(' ') + '</p>';
+    }
+
+    let suggestionsHtml = '';
+    if (result.suggestions && result.suggestions.length) {
+      const items = result.suggestions.map(s => `<li>${s}</li>`).join('');
+      suggestionsHtml = `<p style="margin-top:12px;font-weight:600;color:${sufficient ? '#065f46' : '#92400e'};">Suggestions:</p><ul>${items}</ul>`;
+    }
+
+    box.className = `show ${sufficient ? 'sufficient' : 'insufficient'}`;
+    box.style.display = '';
+    box.innerHTML = `
+      <div class="validation-header">${icon} ${headerText}</div>
+      <div class="validation-body">
+        <p>${result.summary || ''}</p>
+        ${missingHtml}
+        ${suggestionsHtml}
+      </div>
+      <div class="score-row">
+        <span class="score-label">Evidence score</span>
+        <div class="score-bar"><div class="score-fill ${scoreClass}" style="width:${score}%"></div></div>
+        <span class="score-value">${score}/100</span>
+      </div>`;
+
+    if (sufficient) {
+      submitBtn.classList.add('show');
+    } else {
+      submitBtn.classList.remove('show');
+    }
+
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function submitFeedback() {
+    const data = getFormData();
+    const err = validate(data);
+    if (err) { alert(err); return; }
+
+    // In a real app: POST to your backend here.
+    document.getElementById('form-section').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('form-section').style.display = 'none';
+      const s = document.getElementById('success-screen');
+      s.classList.add('show');
+    }, 200);
+  }
+</script>
+</body>
+</html>
