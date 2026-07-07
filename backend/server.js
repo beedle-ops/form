@@ -2,15 +2,26 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const { retrieveRelevantChunks } = require('./documents');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SUBMISSIONS_FILE = path.join(__dirname, 'submissions.json');
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-const CHAT_SYSTEM_PROMPT = `You are a helpful assistant answering basic product questions about GOV.UK One Login, the UK government's single sign-on and identity verification service used to access services across government departments (e.g. HMRC, DVLA, DWP). You help service team staff with general questions such as: what One Login is, how it works, which departments use it, how identity verification works, common troubleshooting steps, and where to get further help.
+const CHAT_NO_MATCH_REPLY = "I don't have that information in the documents I've been given. Please contact your service team or submit feedback via this form.";
 
-Keep answers short and plain-English. If a question needs account-specific detail, personal data, or something you're not certain about, say you can't help with that and point the user to submit feedback via this form or contact their department's support channel. Never ask for or process personal information (names, National Insurance numbers, addresses, emails, passwords, one-time codes). Do not invent specific policy details, dates, or figures.`;
+function buildChatSystemPrompt(contextText) {
+  return `You are a product-query assistant. Answer ONLY using the CONTEXT passages below, which come from documents your team has uploaded. Do not use any outside knowledge, even if you're confident it's correct.
+
+Rules:
+- If the context answers the question, reply concisely in plain English and name the source document(s) it came from.
+- If the context does not contain the answer, reply with exactly: "${CHAT_NO_MATCH_REPLY}" — do not guess or fill gaps with general knowledge.
+- Never ask for or use personal information (names, National Insurance numbers, addresses, emails, passwords, one-time codes).
+
+CONTEXT:
+${contextText}`;
+}
 
 const CHAT_MAX_HISTORY = 10;
 const CHAT_MAX_MESSAGE_LENGTH = 2000;
@@ -85,6 +96,21 @@ app.post('/chat', async (req, res) => {
   }
 
   const recent = cleaned.slice(-CHAT_MAX_HISTORY);
+  const latestQuestion = [...recent].reverse().find(m => m.role === 'user')?.content || '';
+
+  let chunks;
+  try {
+    chunks = await retrieveRelevantChunks(latestQuestion);
+  } catch (e) {
+    console.error(`Document retrieval error: ${e.message}`);
+    chunks = [];
+  }
+
+  if (chunks.length === 0) {
+    return res.json({ reply: CHAT_NO_MATCH_REPLY });
+  }
+
+  const contextText = chunks.map(c => `[Source: ${c.source}]\n${c.text}`).join('\n\n---\n\n');
 
   try {
     const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -97,7 +123,7 @@ app.post('/chat', async (req, res) => {
       body: JSON.stringify({
         model: 'claude-opus-4-8',
         max_tokens: 400,
-        system: CHAT_SYSTEM_PROMPT,
+        system: buildChatSystemPrompt(contextText),
         messages: recent,
       }),
     });
