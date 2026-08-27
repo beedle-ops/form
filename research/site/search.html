@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browse implementations — Company Implementation Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav class="topnav" id="nav"></nav>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="/">Home</a> / Browse</div>
+</div>
+
+<section class="section" style="padding-top:16px;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow" id="query-label">All implementations</div>
+        <h2 id="results-heading">Browse research</h2>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <select id="filter-category"><option value="">All problems</option></select>
+      <select id="filter-industry"><option value="">All industries</option></select>
+      <select id="filter-tag"><option value="">All tags</option></select>
+      <button class="btn-secondary" id="clear-filters" type="button">Clear filters</button>
+      <button class="btn-primary" id="compare-selected" type="button" style="margin-left:auto; display:none;">Compare selected &rarr;</button>
+    </div>
+
+    <div class="results-meta" id="results-meta"></div>
+    <div class="card-grid" id="results-grid"></div>
+  </div>
+</section>
+
+<footer id="footer"></footer>
+
+<script src="/js/common.js"></script>
+<script>
+  CII.renderNav('Browse');
+  CII.renderFooter();
+
+  const compareSelection = new Set();
+
+  CII.loadData().then(({ records }) => {
+    const categories = [...new Set(records.map((r) => r.category))].sort();
+    const industries = [...new Set(records.map((r) => r.industry))].sort();
+    const tags = [...new Set(records.flatMap((r) => r.tags || []))].sort();
+
+    const catSel = document.getElementById('filter-category');
+    categories.forEach((c) => {
+      const label = records.find((r) => r.category === c)?.problem || c;
+      catSel.innerHTML += `<option value="${CII.escapeHtml(c)}">${CII.escapeHtml(label)}</option>`;
+    });
+    const indSel = document.getElementById('filter-industry');
+    industries.forEach((i) => { indSel.innerHTML += `<option value="${CII.escapeHtml(i)}">${CII.escapeHtml(i)}</option>`; });
+    const tagSel = document.getElementById('filter-tag');
+    tags.forEach((t) => { tagSel.innerHTML += `<option value="${CII.escapeHtml(t)}">${CII.escapeHtml(t)}</option>`; });
+
+    // Pre-fill from URL
+    const q = CII.getParam('q');
+    catSel.value = CII.getParam('category');
+    indSel.value = CII.getParam('industry');
+    tagSel.value = CII.getParam('tag');
+    if (q) document.getElementById('query-label').textContent = `Results for “${q}”`;
+
+    function render() {
+      let list = CII.search(records, q);
+      list = CII.filterRecords(list, {
+        category: catSel.value, industry: indSel.value, tag: tagSel.value,
+      });
+
+      document.getElementById('results-meta').textContent = `${list.length} implementation${list.length === 1 ? '' : 's'}`;
+      const grid = document.getElementById('results-grid');
+      if (list.length === 0) {
+        grid.innerHTML = '<p class="no-results">No implementations match yet. Try a different search term or clear filters.</p>';
+        document.getElementById('compare-selected').style.display = 'none';
+        return;
+      }
+      grid.innerHTML = list.map((r) => {
+        const card = CII.recordCardHtml(r);
+        return card.replace('<div class="card-actions">', `
+          <label class="compare-check"><input type="checkbox" data-compare="${CII.escapeHtml(r.id)}" ${compareSelection.has(r.id) ? 'checked' : ''}> Compare</label>
+          <div class="card-actions">`);
+      }).join('');
+      CII.wireCardEvents(grid);
+
+      grid.querySelectorAll('[data-compare]').forEach((cb) => {
+        cb.addEventListener('change', () => {
+          const id = cb.getAttribute('data-compare');
+          if (cb.checked) compareSelection.add(id); else compareSelection.delete(id);
+          updateCompareButton();
+        });
+      });
+    }
+
+    function updateCompareButton() {
+      const btn = document.getElementById('compare-selected');
+      btn.style.display = compareSelection.size >= 2 ? 'inline-block' : 'none';
+      btn.textContent = `Compare selected (${compareSelection.size}) →`;
+    }
+
+    document.getElementById('compare-selected').addEventListener('click', () => {
+      window.location.href = `/compare.html${CII.qs({ ids: [...compareSelection].join(',') })}`;
+    });
+
+    [catSel, indSel, tagSel].forEach((sel) => sel.addEventListener('change', render));
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      catSel.value = ''; indSel.value = ''; tagSel.value = '';
+      render();
+    });
+
+    if (q) CII.track('search', { query: q, source: 'search_page_load' });
+    render();
+  });
+</script>
+</body>
+</html>

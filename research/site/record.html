@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research record — Company Implementation Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav class="topnav" id="nav"></nav>
+
+<div class="wrap">
+  <div class="breadcrumb" id="breadcrumb"><a href="/">Home</a> / <a href="/search.html">Browse</a> / <span id="crumb-current"></span></div>
+</div>
+
+<div id="detail-root"></div>
+
+<footer id="footer"></footer>
+
+<script src="/js/common.js"></script>
+<script>
+  CII.renderNav('Browse');
+  CII.renderFooter();
+
+  const id = CII.getParam('id');
+
+  CII.loadData().then(({ records }) => {
+    const record = records.find((r) => r.id === id);
+    const root = document.getElementById('detail-root');
+
+    if (!record) {
+      root.innerHTML = '<div class="wrap"><div class="empty-state"><h2>Record not found</h2><p>This research record doesn\'t exist or may have been removed.</p><a class="btn-primary" href="/search.html">Browse all implementations</a></div></div>';
+      return;
+    }
+
+    document.title = `${record.title} — Company Implementation Intelligence`;
+    document.getElementById('crumb-current').textContent = record.title;
+
+    CII.track('record_viewed', { id: record.id, company: record.company, category: record.category });
+
+    const related = records.filter((r) => r.id !== record.id && r.category === record.category).slice(0, 5);
+    const sameCompany = records.filter((r) => r.id !== record.id && r.company === record.company);
+    const saved = CII.isSaved(record.id);
+    const checkedDate = new Date(record.date_checked + 'T00:00:00');
+    const checkedDateStr = isNaN(checkedDate) ? record.date_checked : checkedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    root.innerHTML = `
+      <div class="wrap">
+        <div class="detail-head">
+          <div class="eyebrow">${CII.escapeHtml(record.problem)}</div>
+          <h1>${CII.escapeHtml(record.problem)} &mdash; <a href="/company.html${CII.qs({ name: record.company })}" style="color:inherit;">${CII.escapeHtml(record.company)}</a></h1>
+          <div class="meta-row">
+            <span><strong>Industry:</strong> ${CII.escapeHtml(record.industry)}</span>
+            <span><strong>Implementation:</strong> ${CII.escapeHtml(record.implementation_type)}</span>
+            <span><strong>Last checked:</strong> ${CII.escapeHtml(checkedDateStr)}</span>
+          </div>
+          <div class="card-tags">${CII.tagsHtml(record.tags)}</div>
+          <div style="margin-top:16px;">
+            <button class="btn-primary" id="save-toggle">${saved ? '★ Saved to your library' : '☆ Save to your library'}</button>
+          </div>
+        </div>
+
+        <div class="detail-body">
+          <div class="detail-main">
+            <h3>What they do</h3>
+            <span class="evidence-label fact">Factual observation</span>
+            <div class="fact-block">${CII.escapeHtml(record.summary)}</div>
+
+            <h3>The flow</h3>
+            <ol class="steps-list">
+              ${(record.steps || []).map((s) => `<li>${CII.escapeHtml(s)}</li>`).join('')}
+            </ol>
+
+            <h3>Notable implementation</h3>
+            <span class="evidence-label analysis">Our analysis</span>
+            <div class="analysis-block">${CII.escapeHtml(record.analysis)}</div>
+          </div>
+
+          <div class="detail-side">
+            <div class="side-box">
+              <h4>Source</h4>
+              <div class="source-link"><a href="${CII.escapeHtml(record.source_url)}" target="_blank" rel="noopener noreferrer" id="source-link">${CII.escapeHtml(record.source_type || 'Public source')} &rarr;</a></div>
+            </div>
+
+            ${sameCompany.length ? `
+            <div class="side-box">
+              <h4>More from ${CII.escapeHtml(record.company)}</h4>
+              <div class="related-list">
+                ${sameCompany.map((r) => `<a class="related-item" href="/record.html${CII.qs({ id: r.id })}"><div class="rel-company">${CII.escapeHtml(r.problem)}</div><div class="rel-industry">${CII.escapeHtml(r.implementation_type)}</div></a>`).join('')}
+              </div>
+            </div>` : ''}
+
+            <div class="side-box">
+              <h4>Related examples — ${CII.escapeHtml(record.problem)}</h4>
+              <div class="related-list">
+                ${related.map((r) => `<a class="related-item" href="/record.html${CII.qs({ id: r.id })}"><div class="rel-company">${CII.escapeHtml(r.company)}</div><div class="rel-industry">${CII.escapeHtml(r.industry)}</div></a>`).join('') || '<p class="no-results">No other examples yet.</p>'}
+              </div>
+              <div style="margin-top:12px;">
+                <a class="btn-secondary" href="/search.html${CII.qs({ category: record.category })}">See all ${CII.escapeHtml(record.problem)} &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('save-toggle').addEventListener('click', () => {
+      const nowSaved = CII.toggleSave(record.id);
+      document.getElementById('save-toggle').textContent = nowSaved ? '★ Saved to your library' : '☆ Save to your library';
+    });
+
+    document.getElementById('source-link').addEventListener('click', () => {
+      CII.track('source_clicked', { id: record.id, url: record.source_url });
+    });
+  });
+</script>
+</body>
+</html>

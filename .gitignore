@@ -1,0 +1,4 @@
+node_modules/
+research/data/analytics.log
+backend/submissions.json
+backend/summaries.json

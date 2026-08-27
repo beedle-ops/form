@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compare implementations — Company Implementation Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav class="topnav" id="nav"></nav>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="/">Home</a> / Compare</div>
+</div>
+
+<section class="section" style="padding-top:16px;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Side by side</div>
+        <h2 id="compare-heading">Compare implementations</h2>
+      </div>
+    </div>
+
+    <div id="picker-panel" style="margin-bottom:28px;">
+      <p style="color:var(--ink-soft); font-size:14px; margin-bottom:12px;">Pick a problem to compare, then choose which companies to show.</p>
+      <select id="category-picker" style="font-size:14px; padding:8px 12px; border:1px solid var(--line-strong); border-radius:4px; margin-right:12px;"></select>
+      <div id="company-checks" style="margin-top:16px; display:flex; flex-wrap:wrap; gap:10px;"></div>
+    </div>
+
+    <div id="compare-output"></div>
+  </div>
+</section>
+
+<footer id="footer"></footer>
+
+<script src="/js/common.js"></script>
+<script>
+  CII.renderNav('Compare');
+  CII.renderFooter();
+
+  CII.loadData().then(({ records }) => {
+    const idsParam = CII.getParam('ids');
+    const categoryParam = CII.getParam('category');
+    const catSel = document.getElementById('category-picker');
+    const categories = [...new Set(records.map((r) => r.category))];
+
+    categories.forEach((c) => {
+      const label = records.find((r) => r.category === c)?.problem || c;
+      catSel.innerHTML += `<option value="${CII.escapeHtml(c)}">${CII.escapeHtml(label)}</option>`;
+    });
+
+    let preselectedIds = idsParam ? idsParam.split(',').filter(Boolean) : [];
+    let activeCategory = categoryParam || (preselectedIds.length ? records.find((r) => r.id === preselectedIds[0])?.category : categories[0]);
+    catSel.value = activeCategory;
+
+    function renderCompanyChecks() {
+      const inCategory = records.filter((r) => r.category === catSel.value);
+      const checksWrap = document.getElementById('company-checks');
+      checksWrap.innerHTML = inCategory.map((r) => `
+        <label style="font-size:13.5px; display:flex; align-items:center; gap:6px; border:1px solid var(--line); padding:6px 10px; border-radius:100px;">
+          <input type="checkbox" data-id="${CII.escapeHtml(r.id)}" ${preselectedIds.includes(r.id) ? 'checked' : ''}> ${CII.escapeHtml(r.company)}
+        </label>
+      `).join('');
+      checksWrap.querySelectorAll('input').forEach((cb) => cb.addEventListener('change', renderTable));
+    }
+
+    function selectedRecords() {
+      const checked = [...document.querySelectorAll('#company-checks input:checked')].map((cb) => cb.getAttribute('data-id'));
+      return records.filter((r) => checked.includes(r.id));
+    }
+
+    function renderTable() {
+      const selected = selectedRecords();
+      const output = document.getElementById('compare-output');
+      if (selected.length < 2) {
+        output.innerHTML = '<p class="no-results">Select at least two companies above to compare.</p>';
+        return;
+      }
+      CII.track('comparison_started', { ids: selected.map((r) => r.id) });
+
+      const maxSteps = Math.max(...selected.map((r) => (r.steps || []).length));
+
+      const rows = [
+        { label: 'Industry', render: (r) => CII.escapeHtml(r.industry) },
+        { label: 'Implementation type', render: (r) => CII.escapeHtml(r.implementation_type) },
+        { label: 'Number of steps', render: (r) => String((r.steps || []).length) },
+        { label: 'Re-authentication required', render: (r) => (r.tags || []).includes('re-authentication') ? 'Yes' : 'Not documented' },
+        { label: 'Cooling-off / grace period', render: (r) => (r.tags || []).some((t) => t.includes('cooling-off')) ? 'Yes' : 'Not documented' },
+        { label: 'Notable feature', render: (r) => CII.escapeHtml(r.analysis) },
+        { label: 'Source', render: (r) => `<a href="${CII.escapeHtml(r.source_url)}" target="_blank" rel="noopener noreferrer">${CII.escapeHtml(r.source_type)}</a>` },
+      ];
+
+      let html = '<div class="compare-scroll"><table class="compare-table"><thead><tr><th>Company</th>';
+      html += selected.map((r) => `<th><a href="/record.html${CII.qs({ id: r.id })}" style="color:inherit;">${CII.escapeHtml(r.company)}</a></th>`).join('');
+      html += '</tr></thead><tbody>';
+      rows.forEach((row) => {
+        html += `<tr><td class="row-label">${row.label}</td>`;
+        html += selected.map((r) => `<td>${row.render(r)}</td>`).join('');
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('compare-output').innerHTML = html;
+    }
+
+    catSel.addEventListener('change', () => { renderCompanyChecks(); renderTable(); });
+    renderCompanyChecks();
+    renderTable();
+  });
+</script>
+</body>
+</html>

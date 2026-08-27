@@ -1,0 +1,61 @@
+[
+  {
+    "id": "account-deletion",
+    "title": "Account deletion",
+    "description": "How 12 companies actually let a user close their account and remove their data — from a one-click settings toggle to a support-only email request.",
+    "record_ids": [
+      "account-deletion-monzo",
+      "account-deletion-wise",
+      "account-deletion-netflix",
+      "account-deletion-spotify",
+      "account-deletion-discord",
+      "account-deletion-instagram",
+      "account-deletion-linkedin",
+      "account-deletion-github",
+      "account-deletion-notion",
+      "account-deletion-uber",
+      "account-deletion-airbnb",
+      "account-deletion-paypal"
+    ]
+  },
+  {
+    "id": "identity-verification",
+    "title": "Identity verification (KYC)",
+    "description": "How 12 fintechs, crypto exchanges, and gig platforms verify who a user actually is — document scans, liveness checks, and the vendors behind them.",
+    "record_ids": [
+      "identity-verification-revolut",
+      "identity-verification-monzo",
+      "identity-verification-coinbase",
+      "identity-verification-wise",
+      "identity-verification-kraken",
+      "identity-verification-robinhood",
+      "identity-verification-paypal",
+      "identity-verification-stripe-connect",
+      "identity-verification-doordash-dasher",
+      "identity-verification-uber-driver",
+      "identity-verification-airbnb",
+      "identity-verification-binance"
+    ]
+  },
+  {
+    "id": "no-self-service-deletion",
+    "title": "No real self-service deletion",
+    "description": "Companies where closing your account still requires contacting a human, rather than a self-service settings flow.",
+    "record_ids": [
+      "account-deletion-netflix"
+    ]
+  },
+  {
+    "id": "fintech-trust-and-compliance",
+    "title": "Fintech trust & compliance essentials",
+    "description": "Account closure and identity verification at the same companies, side by side — useful for benchmarking a single fintech's end-to-end trust posture.",
+    "record_ids": [
+      "account-deletion-monzo",
+      "identity-verification-monzo",
+      "account-deletion-wise",
+      "identity-verification-wise",
+      "account-deletion-paypal",
+      "identity-verification-paypal"
+    ]
+  }
+]

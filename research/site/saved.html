@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saved — Company Implementation Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav class="topnav" id="nav"></nav>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="/">Home</a> / Saved</div>
+</div>
+
+<section class="section" style="padding-top:16px; border-bottom:none;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Your library</div>
+        <h2>Saved implementations</h2>
+      </div>
+    </div>
+    <p style="color:var(--ink-soft); font-size:14px; margin-bottom:24px; max-width:560px;">Saved locally in this browser only — nothing is sent to an account or server. Clearing your browser storage will clear this list.</p>
+    <div class="card-grid" id="saved-cards"></div>
+  </div>
+</section>
+
+<footer id="footer"></footer>
+
+<script src="/js/common.js"></script>
+<script>
+  CII.renderNav('Saved');
+  CII.renderFooter();
+
+  CII.loadData().then(({ records }) => {
+    const savedIds = CII.getSaved();
+    const items = records.filter((r) => savedIds.includes(r.id));
+    const grid = document.getElementById('saved-cards');
+
+    if (items.length === 0) {
+      grid.innerHTML = '<p class="no-results">Nothing saved yet. Browse implementations and click ☆ Save on any card.</p>';
+      return;
+    }
+    grid.innerHTML = items.map(CII.recordCardHtml).join('');
+    CII.wireCardEvents(grid);
+
+    // Re-render if a save is toggled off from this page
+    grid.addEventListener('click', (e) => {
+      if (e.target.matches('[data-save]')) {
+        setTimeout(() => {
+          const stillSaved = CII.getSaved();
+          if (!stillSaved.includes(e.target.getAttribute('data-save'))) {
+            e.target.closest('.card').remove();
+            if (!grid.querySelector('.card')) grid.innerHTML = '<p class="no-results">Nothing saved yet. Browse implementations and click ☆ Save on any card.</p>';
+          }
+        }, 0);
+      }
+    });
+  });
+</script>
+</body>
+</html>

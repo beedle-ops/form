@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company Implementation Intelligence — see how companies actually solve problems</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav class="topnav" id="nav"></nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>See how companies actually solve problems.</h1>
+    <p class="lede">Research real-world product, customer and operational implementations — without manually investigating dozens of companies yourself.</p>
+
+    <div class="search-box">
+      <form id="hero-search-form" role="search">
+        <input type="search" id="hero-search-input" placeholder="What are you researching? e.g. &ldquo;account deletion&rdquo;" aria-label="What are you researching?">
+        <button type="submit">Search</button>
+      </form>
+      <div class="example-queries" id="example-queries">
+        <span class="label">Try:</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Research areas</div>
+        <h2>Browse by problem</h2>
+      </div>
+      <a class="see-all" href="/search.html">See all implementations &rarr;</a>
+    </div>
+    <div class="card-grid" id="category-cards"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Curated</div>
+        <h2>Collections</h2>
+      </div>
+      <a class="see-all" href="/collections.html">All collections &rarr;</a>
+    </div>
+    <div class="card-grid" id="collections-preview"></div>
+  </div>
+</section>
+
+<section class="section" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Latest</div>
+        <h2>Recently checked implementations</h2>
+      </div>
+    </div>
+    <div class="card-grid" id="recent-cards"></div>
+  </div>
+</section>
+
+<footer id="footer"></footer>
+
+<script src="/js/common.js"></script>
+<script>
+  CII.renderNav('Browse');
+  CII.renderFooter();
+
+  const EXAMPLES = [
+    'How do fintechs handle account deletion?',
+    'Identity verification flows',
+    'How do companies handle cancellation?',
+    'Compare cookie consent',
+    'How do leading products handle failed payments?',
+  ];
+
+  const exampleWrap = document.getElementById('example-queries');
+  EXAMPLES.forEach((ex) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip-btn';
+    btn.textContent = ex;
+    btn.addEventListener('click', () => {
+      CII.track('search', { query: ex, source: 'example_chip' });
+      window.location.href = `/search.html${CII.qs({ q: ex })}`;
+    });
+    exampleWrap.appendChild(btn);
+  });
+
+  document.getElementById('hero-search-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = document.getElementById('hero-search-input').value.trim();
+    if (q) {
+      CII.track('search', { query: q, source: 'homepage' });
+      window.location.href = `/search.html${CII.qs({ q })}`;
+    }
+  });
+
+  CII.loadData().then(({ records, collections }) => {
+    // Category cards — one per distinct problem/category
+    const byCategory = {};
+    records.forEach((r) => {
+      byCategory[r.category] = byCategory[r.category] || { problem: r.problem, category: r.category, count: 0, industries: new Set() };
+      byCategory[r.category].count += 1;
+      byCategory[r.category].industries.add(r.industry);
+    });
+
+    const catWrap = document.getElementById('category-cards');
+    Object.values(byCategory).forEach((c) => {
+      const div = document.createElement('div');
+      div.className = 'collection-card';
+      div.innerHTML = `
+        <h3>${CII.escapeHtml(c.problem)}</h3>
+        <p>${c.count} implementations across ${c.industries.size} industries</p>
+        <a class="see-all" href="/search.html${CII.qs({ category: c.category })}">Explore &rarr;</a>
+      `;
+      catWrap.appendChild(div);
+    });
+    if (Object.values(byCategory).length === 0) {
+      catWrap.innerHTML = '<p class="no-results">No research records yet.</p>';
+    }
+
+    // Collections preview (first 3)
+    const colWrap = document.getElementById('collections-preview');
+    collections.slice(0, 3).forEach((c) => {
+      const div = document.createElement('div');
+      div.className = 'collection-card';
+      div.innerHTML = `
+        <h3>${CII.escapeHtml(c.title)}</h3>
+        <p>${CII.escapeHtml(c.description)}</p>
+        <span class="count">${c.record_ids.length} examples</span>
+        <a class="see-all" href="/collections.html${CII.qs({ id: c.id })}">View collection &rarr;</a>
+      `;
+      colWrap.appendChild(div);
+    });
+
+    // Recent cards
+    const recentWrap = document.getElementById('recent-cards');
+    const recent = records.slice().sort((a, b) => (b.date_checked || '').localeCompare(a.date_checked || '')).slice(0, 6);
+    recentWrap.innerHTML = recent.map(CII.recordCardHtml).join('') || '<p class="no-results">No research records yet.</p>';
+    CII.wireCardEvents(recentWrap);
+  });
+</script>
+</body>
+</html>

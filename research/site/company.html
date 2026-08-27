@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company — Company Implementation Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav class="topnav" id="nav"></nav>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="/">Home</a> / <a href="/search.html">Browse</a> / <span id="crumb-current"></span></div>
+</div>
+
+<div id="company-root"></div>
+
+<footer id="footer"></footer>
+
+<script src="/js/common.js"></script>
+<script>
+  CII.renderNav('Browse');
+  CII.renderFooter();
+
+  const name = CII.getParam('name');
+
+  CII.loadData().then(({ records }) => {
+    const items = records.filter((r) => r.company === name);
+    const root = document.getElementById('company-root');
+
+    if (items.length === 0) {
+      root.innerHTML = '<div class="wrap"><div class="empty-state"><h2>No research on this company yet</h2><a class="btn-primary" href="/search.html">Browse all implementations</a></div></div>';
+      return;
+    }
+
+    document.title = `${name} — Company Implementation Intelligence`;
+    document.getElementById('crumb-current').textContent = name;
+    CII.track('company_viewed', { company: name });
+
+    const industry = items[0].industry;
+
+    root.innerHTML = `
+      <section class="section" style="padding-top:16px; border-bottom:none;">
+        <div class="wrap">
+          <div class="eyebrow">${CII.escapeHtml(industry)}</div>
+          <h2 style="font-family:var(--serif); font-size:32px; margin:0 0 6px;">${CII.escapeHtml(name)}</h2>
+          <p style="color:var(--ink-soft); margin-bottom:28px;">${items.length} research example${items.length === 1 ? '' : 's'} on file</p>
+          <div class="card-grid" id="company-cards"></div>
+        </div>
+      </section>
+    `;
+    const grid = document.getElementById('company-cards');
+    grid.innerHTML = items.map(CII.recordCardHtml).join('');
+    CII.wireCardEvents(grid);
+  });
+</script>
+</body>
+</html>
